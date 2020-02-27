@@ -5,6 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.util.Log
+import io.reactivex.Observable
 
 /**
  * Created by OA-JomRafa on 25/02/2020.
@@ -52,7 +53,7 @@ class DatabaseHandler(context: Context) : SQLiteOpenHelper(context, DB_NAME, nul
         return user
     }
 
-    fun users(): List<User> {
+    fun users(): Observable<List<User>> {
         val userList = ArrayList<User>()
         val db = writableDatabase
         val selectQuery = "SELECT  * FROM $TABLE_NAME"
@@ -71,7 +72,7 @@ class DatabaseHandler(context: Context) : SQLiteOpenHelper(context, DB_NAME, nul
             }
         }
         cursor.close()
-        return userList
+        return Observable.just(userList)
     }
 
     fun updateUser(user: User): Boolean {
@@ -101,7 +102,7 @@ class DatabaseHandler(context: Context) : SQLiteOpenHelper(context, DB_NAME, nul
     }
 
     companion object {
-        private const val DB_VERSION = 2
+        private const val DB_VERSION = 1
         private const val DB_NAME = "SampleDB"
         private const val TABLE_NAME = "Users"
 

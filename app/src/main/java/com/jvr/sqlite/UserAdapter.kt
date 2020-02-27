@@ -12,7 +12,7 @@ import kotlinx.android.synthetic.main.item_list.view.*
  */
 
 
-class UserAdapter(private val items : List<User>, private val delegate: Delegate) : RecyclerView.Adapter<UserAdapter.ViewHolder>() {
+class UserAdapter(private var items : List<User>, private val delegate: Delegate) : RecyclerView.Adapter<UserAdapter.ViewHolder>() {
 
     interface Delegate{
         fun onItemClick(user: User)
@@ -37,6 +37,11 @@ class UserAdapter(private val items : List<User>, private val delegate: Delegate
             delegate.onItemClick(user)
         }
 
+    }
+
+    fun filterUser(user: List<User>){
+        items = user
+        notifyDataSetChanged()
     }
 
     class ViewHolder (view: View) : RecyclerView.ViewHolder(view) {

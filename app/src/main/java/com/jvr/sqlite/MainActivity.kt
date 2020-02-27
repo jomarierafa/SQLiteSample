@@ -2,6 +2,8 @@ package com.jvr.sqlite
 
 import android.content.Intent
 import android.os.Bundle
+import android.text.Editable
+import android.text.TextWatcher
 import android.view.Menu
 import android.view.MenuItem
 import androidx.appcompat.app.AlertDialog
@@ -10,12 +12,19 @@ import androidx.appcompat.widget.Toolbar
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import io.reactivex.android.schedulers.AndroidSchedulers
+import io.reactivex.disposables.CompositeDisposable
+import io.reactivex.schedulers.Schedulers
+import kotlinx.android.synthetic.main.content_main.*
+import org.jetbrains.anko.toast
 import java.util.*
 
 
 
 
 class MainActivity : AppCompatActivity(), UserAdapter.Delegate {
+
+    var disposable = CompositeDisposable()
 
     var userRecyclerAdapter: UserAdapter? = null
     var fab: FloatingActionButton? = null
@@ -34,9 +43,22 @@ class MainActivity : AppCompatActivity(), UserAdapter.Delegate {
 
     fun initDB() {
         dbHandler = DatabaseHandler(this)
-        userList = (dbHandler as DatabaseHandler).users()
+
+        disposable.add((dbHandler as DatabaseHandler).users()
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(
+                {result->
+                    userList = result
+                    userRecyclerAdapter = UserAdapter(userList, this)
+                    (recyclerView as RecyclerView).adapter = userRecyclerAdapter
+                },
+                {error-> toast("Error ${error.localizedMessage}")}
+            ))
+
+        /*userList = (dbHandler as DatabaseHandler).users()
         userRecyclerAdapter = UserAdapter(userList, this)
-        (recyclerView as RecyclerView).adapter = userRecyclerAdapter
+        (recyclerView as RecyclerView).adapter = userRecyclerAdapter*/
     }
 
     fun initViews() {
@@ -55,6 +77,16 @@ class MainActivity : AppCompatActivity(), UserAdapter.Delegate {
             i.putExtra("Mode", "ADD")
             startActivity(i)
         }
+
+        edt_search.addTextChangedListener(object : TextWatcher {
+            override fun afterTextChanged(s: Editable?) {
+                val user: List<User> = userList.filter { it.name!!.contains(s.toString(), true) }
+                userRecyclerAdapter?.filterUser(user)
+            }
+            override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
+            override fun onTextChanged(s: CharSequence?, start: Int, before: Int, count: Int) {}
+
+        })
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
